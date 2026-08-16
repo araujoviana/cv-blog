@@ -87,7 +87,20 @@ const base = import.meta.env.BASE_URL;
   .cv-grid {
     list-style: none;
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+    /* Without an explicit width, the grid container's own size is
+       shrink-to-fit, which leaves the min(16rem, 100%) track size below
+       with an indefinite percentage basis, undoing the clamp on very
+       narrow viewports (< ~360px). Pinning width:100% here (bounded by
+       max-width below) gives that percentage something definite to
+       resolve against. */
+    width: 100%;
+    /* min(16rem, 100%) rather than a bare 16rem: on viewports narrower than
+       16rem+gutters, auto-fit still enforces the raw 16rem minimum track
+       size and lets the grid overflow the page instead of collapsing to one
+       column, dragging the whole layout into horizontal scroll. Clamping
+       the minimum to 100% is a no-op once the container is wide enough for
+       16rem (i.e. everywhere above small phones), so desktop is unchanged. */
+    grid-template-columns: repeat(auto-fit, minmax(min(16rem, 100%), 1fr));
     gap: var(--space-2);
     max-width: 60rem;
     margin: 0 auto var(--space-4);
