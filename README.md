@@ -1,2 +1,3 @@
 # cv-blog
-Blog do curso de Computação Visual - Mackenzie 2026
+
+Blog do curso de Computação Visual (Mackenzie, 2026.2).

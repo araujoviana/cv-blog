@@ -1,0 +1,125 @@
+---
+import { getCollection } from "astro:content";
+import Layout from "../layouts/Layout.astro";
+
+const posts = (await getCollection("posts")).sort(
+  (a, b) => a.data.order - b.data.order,
+);
+const base = import.meta.env.BASE_URL;
+---
+
+<Layout title="cv-blog">
+  <header class="cv-header">
+    <div class="cv-logo-row">
+      <img
+        class="cv-logo"
+        src={`${base}images/logo-crusty-heavy.jpg`}
+        alt="Computação Visual"
+      />
+      <img
+        class="cv-logo-mackenzie"
+        src={`${base}images/logo-mackenzie.jpeg`}
+        alt="Universidade Presbiteriana Mackenzie"
+      />
+    </div>
+    <p class="hud-label">registro de aulas · cv262 · mackenzie 2026.2</p>
+  </header>
+
+  <ul class="cv-grid">
+    {
+      posts.map((post) => (
+        <li>
+          <a class="cv-tile" href={`${base}posts/${post.id}/`}>
+            <span class="hud-label cv-tile__tag">
+              POST_{String(post.data.order).padStart(2, "0")}
+            </span>
+            <span class="cv-tile__title cv-glitch-hover">
+              {post.data.title}
+            </span>
+          </a>
+        </li>
+      ))
+    }
+  </ul>
+
+  {
+    posts.length === 0 && (
+      <p class="hud-label">NO SIGNAL · nenhum post ainda.</p>
+    )
+  }
+</Layout>
+
+<style>
+  .cv-header {
+    max-width: 60rem;
+    margin: var(--space-4) auto var(--space-3);
+    padding: 0 var(--space-3);
+  }
+
+  .cv-logo-row {
+    display: flex;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+
+  .cv-logo {
+    display: block;
+    max-width: 22rem;
+    width: 100%;
+    flex: 1 1 auto;
+    height: auto;
+    image-rendering: pixelated;
+  }
+
+  .cv-logo-mackenzie {
+    display: block;
+    flex: none;
+    width: 88px;
+    height: 88px;
+    /* Source render's "black" background isn't quite pure #000 (JPEG noise),
+       screen blend against the page's true black makes only the red badge
+       show, so it reads as one seamless logo lockup instead of a boxed-in
+       second image. */
+    mix-blend-mode: screen;
+  }
+
+  .cv-grid {
+    list-style: none;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+    gap: var(--space-2);
+    max-width: 60rem;
+    margin: 0 auto var(--space-4);
+    padding: 0 var(--space-3);
+  }
+
+  .cv-tile {
+    position: relative;
+    display: block;
+    padding: var(--space-2);
+    min-height: 8rem;
+    border: 2px solid var(--muted);
+    text-decoration: none;
+    color: var(--fg);
+    overflow: hidden;
+  }
+
+  .cv-tile__tag {
+    display: block;
+    color: var(--magenta);
+  }
+
+  .cv-tile__title {
+    display: block;
+    margin-top: var(--space-2);
+    font-family: var(--font-display);
+    text-transform: uppercase;
+    font-size: 1rem;
+  }
+
+  .cv-tile:hover {
+    border-color: var(--magenta);
+    box-shadow: 0 0 10px color-mix(in srgb, var(--magenta) 55%, transparent);
+  }
+</style>

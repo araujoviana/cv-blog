@@ -1,0 +1,106 @@
+---
+import Layout from "./Layout.astro";
+
+interface Props {
+  title: string;
+  date: Date;
+  order: number;
+  tags: string[];
+}
+const { title, date, order, tags } = Astro.props;
+const orderTag = `POST_${String(order).padStart(2, "0")}`;
+---
+
+<Layout title={`${title} · cv-blog`}>
+  <main class="cv-frame">
+    <span class="cv-frame__corner cv-frame__corner--tl"></span>
+    <span class="cv-frame__corner cv-frame__corner--tr"></span>
+    <span class="cv-frame__corner cv-frame__corner--bl"></span>
+    <span class="cv-frame__corner cv-frame__corner--br"></span>
+
+    <div class="hud-label cv-frame__tag">{orderTag}</div>
+
+    <a class="cv-frame__back hud-label" href={`${import.meta.env.BASE_URL}`}
+      >← FEED</a
+    >
+
+    <article class="cv-frame__body">
+      <h1 class="cv-glitch-in">{title}</h1>
+      <p class="hud-label cv-frame__meta">
+        {date.toISOString().slice(0, 10)}
+        {tags.length > 0 && ` · ${tags.join(", ")}`}
+      </p>
+      <slot />
+    </article>
+  </main>
+</Layout>
+
+<style>
+  .cv-frame {
+    position: relative;
+    max-width: 42rem;
+    margin: var(--space-4) auto;
+    padding: var(--space-3);
+    border: 2px solid var(--muted);
+  }
+
+  .cv-frame__corner {
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    border: 3px solid var(--magenta);
+    box-shadow: 0 0 6px var(--magenta);
+  }
+  .cv-frame__corner--tl {
+    top: -2px;
+    left: -2px;
+    border-right: none;
+    border-bottom: none;
+  }
+  .cv-frame__corner--tr {
+    top: -2px;
+    right: -2px;
+    border-left: none;
+    border-bottom: none;
+  }
+  .cv-frame__corner--bl {
+    bottom: -2px;
+    left: -2px;
+    border-right: none;
+    border-top: none;
+  }
+  .cv-frame__corner--br {
+    bottom: -2px;
+    right: -2px;
+    border-left: none;
+    border-top: none;
+  }
+
+  .cv-frame__tag {
+    position: absolute;
+    top: -0.6rem;
+    left: var(--space-2);
+    background: var(--bg);
+    padding: 0 var(--space-1);
+    color: var(--magenta);
+  }
+
+  .cv-frame__back {
+    display: inline-block;
+    margin-bottom: var(--space-2);
+    text-decoration: none;
+    color: var(--muted);
+  }
+  .cv-frame__back:hover {
+    color: var(--magenta);
+  }
+
+  .cv-frame__meta {
+    margin-top: 0;
+    margin-bottom: var(--space-3);
+  }
+
+  .cv-frame__body :global(h2) {
+    margin-top: var(--space-3);
+  }
+</style>

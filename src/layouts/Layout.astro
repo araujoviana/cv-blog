@@ -1,0 +1,162 @@
+---
+import { ClientRouter } from "astro:transitions";
+import "../styles/global.css";
+
+interface Props {
+  title: string;
+}
+const { title } = Astro.props;
+const base = import.meta.env.BASE_URL;
+const starfield = `url(${base}images/starfield-tile.png)`;
+
+// Animation (frame cycling, sequence timing) is handled by
+// src/scripts/cursor-animator.js. This just supplies base-path-aware frame
+// URLs and the hotspot/sequence data read out of each source .ani file (see
+// public/cursors/README.md for where those numbers come from).
+const cursorUrl = (name, frame) => `url(${base}cursors/${name}-${frame}.png)`;
+const cursorFrames = {
+  default: {
+    hotspot: [2, 4],
+    sequence: [0, 1],
+    frames: [cursorUrl("default", 0), cursorUrl("default", 1)],
+  },
+  pointer: {
+    hotspot: [9, 24],
+    sequence: [0, 1],
+    frames: [cursorUrl("pointer", 0), cursorUrl("pointer", 1)],
+  },
+  text: {
+    hotspot: [10, 26],
+    sequence: [0, 1],
+    frames: [cursorUrl("text", 0), cursorUrl("text", 1)],
+  },
+  disabled: {
+    hotspot: [10, 21],
+    sequence: [0, 1],
+    frames: [cursorUrl("disabled", 0), cursorUrl("disabled", 1)],
+  },
+  busy: {
+    hotspot: [2, 4],
+    sequence: [0, 1, 2, 1],
+    frames: [cursorUrl("busy", 0), cursorUrl("busy", 1), cursorUrl("busy", 2)],
+  },
+};
+
+// @font-face src paths must be base-prefixed and var() isn't reliably
+// supported inside @font-face, so this is built as a raw string and injected
+// with set:html rather than living in the static global.css.
+const fontFaces = `
+  @font-face {
+    font-family: 'DotGothic16';
+    src: url('${base}fonts/dotgothic16.woff2') format('woff2');
+    font-display: swap;
+  }
+  @font-face {
+    font-family: 'Handjet';
+    src: url('${base}fonts/handjet.woff2') format('woff2');
+    font-weight: 100 900;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: 'VT323';
+    src: url('${base}fonts/vt323.woff2') format('woff2');
+    font-display: swap;
+  }
+`;
+---
+
+<html lang="pt-BR" data-cursor-frames={JSON.stringify(cursorFrames)}>
+  <head>
+    <meta charset="utf-8" />
+    <link
+      rel="icon"
+      type="image/jpeg"
+      href={`${import.meta.env.BASE_URL}favicon.jpeg`}
+    />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{title}</title>
+    <style set:html={fontFaces}></style>
+    <ClientRouter />
+  </head>
+  <body>
+    <div class="cv-page">
+      <slot />
+    </div>
+
+    <footer class="cv-footer">
+      <div class="cv-badge" aria-hidden="true">
+        <span class="cv-badge__eye">◉</span>
+        <span class="cv-badge__text">COMPUTAÇÃO<br />VISUAL</span>
+      </div>
+
+      <div class="cv-footer__badges">
+        <img
+          class="cv-footer__badge"
+          src={`${base}images/open-eyes.gif`}
+          width="88"
+          height="31"
+          alt="OPENEYES"
+          loading="lazy"
+        />
+        <button
+          type="button"
+          class="cv-footer__badge cv-footer__badge--button"
+          id="cv-virus-badge"
+          data-sfx={`${base}audio/splat.mp3`}
+          aria-label="Não clique aqui (toca um efeito sonoro)"
+        >
+          <img
+            src={`${base}images/virus-alert.gif`}
+            width="88"
+            height="31"
+            alt="VIRUS ALERT"
+            loading="lazy"
+          />
+        </button>
+      </div>
+
+      <img
+        class="cv-footer__banner"
+        src={`${base}images/intro-web-created-text-banner.gif`}
+        alt="In the beginning man created the Web"
+        loading="lazy"
+      />
+
+      <p class="hud-label cv-footer__note">
+        Matheus Araujo · 2026<br />
+      </p>
+    </footer>
+
+    <button
+      id="cv-audio-toggle"
+      class="cv-audio-toggle"
+      type="button"
+      aria-pressed="false"
+      data-audio-src={`${import.meta.env.BASE_URL}audio/dump.opus`}
+      transition:persist
+    >
+      ♪ OFF
+    </button>
+
+    <script src="../scripts/cursor-animator.js"></script>
+    <script src="../scripts/audio-player.js"></script>
+    <script src="../scripts/sfx-badge.js"></script>
+  </body>
+</html>
+
+<style define:vars={{ starfield }}>
+  body {
+    background-image: var(--starfield);
+    background-repeat: repeat;
+    /* Tile is 240x240, drifting by exactly one tile loops with no visible
+       jump. Slow and subtle on purpose ("very slightly animated"). */
+    animation: cv-starfield-drift 120s linear infinite;
+  }
+
+  @keyframes cv-starfield-drift {
+    to {
+      background-position: 240px 240px;
+    }
+  }
+</style>

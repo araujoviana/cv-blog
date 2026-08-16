@@ -1,0 +1,359 @@
+/* Design tokens for the "old internet vision terminal" look.
+   The three faces (@font-face declarations live in Layout.astro, not here,
+   see its comment) are picked from public/fonts/SOURCE.md.
+   --cursor-* base values live here; Layout.astro/cursor-animator.js rewrite
+   them at runtime (see the comment further down). */
+:root {
+  --bg: #000000;
+  --fg: #e8e6f0;
+  --magenta: #ff2f92;
+  /* Lightened from an earlier #6b6478, which failed WCAG AA (~3.7:1 on
+     black) for .hud-label text (dates, tags, footer credits), not just
+     decorative chrome. This hits ~5.8:1. */
+  --muted: #8a82a0;
+
+  --font-display: "DotGothic16", ui-monospace, monospace;
+  --font-body: "Handjet", Georgia, serif;
+  --font-utility: "VT323", ui-monospace, monospace;
+
+  --space-1: 0.5rem;
+  --space-2: 1rem;
+  --space-3: 2rem;
+  --space-4: 4rem;
+
+  /* Animated per-role cursor images, rewritten every 167ms by
+     src/scripts/cursor-animator.js to cycle frames. Fallbacks here (used
+     before that script runs, or if JS is disabled) are plain native
+     cursors, one per role. See public/cursors/README.md. */
+  --cursor-default: auto;
+  --cursor-pointer: pointer;
+  --cursor-text: text;
+  --cursor-disabled: not-allowed;
+  --cursor-busy: progress;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  color-scheme: dark;
+  /* Fallback so the space beyond body's box (see below) never shows the
+     native OS cursor. Kept in sync with body's own cursor rule. */
+  cursor: var(--cursor-default);
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  /* Flex column (rather than flow-root) for two reasons at once: it's a
+     block formatting context too, so it still contains child margins
+     (--space-4 top/bottom on .cv-header/.cv-footer) the way flow-root did,
+     but it also lets .cv-page take flex:1 and push .cv-footer to the
+     viewport's bottom edge on short pages (e.g. a single post so far),
+     instead of leaving a scrollable void of bare starfield beneath it. */
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-body);
+  /* Pinned bold: Handjet's lighter weights (~400 and below) have a hinting
+     bug that renders a horizontal gap through every glyph at some sizes.
+     700+ doesn't have it, and reads as a chunkier LCD/pixel look anyway.
+     Since the weight is stuck heavy, readability for long paragraphs comes
+     from size and breathing room instead: bigger, looser line-height, and a
+     touch of letter-spacing so the chunky glyphs don't run into each other. */
+  font-weight: 700;
+  font-size: 1.35rem;
+  line-height: 1.9;
+  letter-spacing: 0.015em;
+  cursor: var(--cursor-default);
+}
+
+a,
+button,
+.cv-tile {
+  cursor: var(--cursor-pointer);
+}
+
+.cv-frame__body p,
+.cv-frame__body li,
+.cv-frame__body blockquote,
+.cv-frame__body code {
+  cursor: var(--cursor-text);
+}
+
+.cv-frame__body p,
+.cv-frame__body li,
+.cv-frame__body blockquote {
+  /* Post body copy is the longest sustained reading on the site, so it gets
+     extra room beyond body's baseline: bigger, more open, more spaced-out
+     than UI chrome/headings need. Handjet stays (see body's comment on why
+     the weight is pinned bold), the boost comes from size/spacing, not a
+     different typeface. */
+  font-size: 1.55rem;
+  line-height: 2.05;
+  letter-spacing: 0.025em;
+  word-spacing: 0.04em;
+}
+
+.cv-frame__body img:not(.cv-emoji) {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+[disabled],
+[aria-disabled="true"] {
+  cursor: var(--cursor-disabled);
+}
+
+/* Astro view-transition navigation in flight, toggled by cursor-animator.js
+   via astro:before-preparation / astro:after-swap. !important because it
+   needs to override every more-specific cursor rule above while it's on. */
+html.cv-busy,
+html.cv-busy * {
+  cursor: var(--cursor-busy) !important;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+a {
+  color: var(--magenta);
+}
+
+a:focus-visible,
+button:focus-visible {
+  outline: 2px solid var(--magenta);
+  outline-offset: 2px;
+}
+
+/* Steam-style :shortcode: emoji (src/plugins/rehype-emoji.mjs), pinned to
+   text height so a GIF never towers over or shrinks below its surrounding
+   line, regardless of the source file's native resolution. */
+.cv-emoji {
+  height: 1em;
+  width: auto;
+  vertical-align: -0.15em;
+}
+
+.hud-label {
+  font-family: var(--font-utility);
+  font-size: 0.9rem;
+  color: var(--muted);
+  letter-spacing: 0.08em;
+}
+
+/* CRT plane: scanlines + a faint tube vignette, both fixed/pointer-events:none
+   so they sit over everything as a screen effect without blocking clicks.
+   Kept below the audio toggle's z-index so that control still reads crisp. */
+body::before,
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9990;
+}
+body::before {
+  background: radial-gradient(
+    ellipse at center,
+    transparent 55%,
+    rgba(0, 0, 0, 0.55) 100%
+  );
+}
+/* Scanlines: was a hard 2-stop repeating-linear-gradient on a 3px period
+   under mix-blend-mode:multiply, which reads fine at 1x but aliases into an
+   ugly moire at zoom/high-DPI (the gradient's repeat period lands on
+   fractional device pixels). Fixed by feathering the stops into a soft
+   3-stop ramp on an even, DPI-safe 4px background-size, and swapping to
+   mix-blend-mode:overlay at low opacity so it reads as phosphor texture
+   rather than a hard multiply cutout over text/images. */
+body::after {
+  background-image: repeating-linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0) 0px,
+    rgba(0, 0, 0, 0.6) 2px,
+    rgba(0, 0, 0, 0) 4px
+  );
+  background-size: 100% 4px;
+  mix-blend-mode: overlay;
+  opacity: 0.1;
+}
+
+/* Glitch: an RGB-split flicker for interactive/heading text. Applied via
+   .cv-glitch-hover on hover and .cv-glitch-in once on load (see PostLayout). */
+@keyframes cv-glitch-text {
+  0%,
+  100% {
+    text-shadow:
+      1px 0 var(--magenta),
+      -1px 0 var(--fg);
+    transform: translate(0, 0);
+  }
+  20% {
+    text-shadow:
+      -2px 0 var(--magenta),
+      2px 0 var(--fg);
+    transform: translate(-1px, 0);
+  }
+  40% {
+    text-shadow:
+      2px 1px var(--magenta),
+      -2px -1px var(--fg);
+    transform: translate(1px, 0);
+  }
+  60% {
+    text-shadow:
+      -1px -1px var(--magenta),
+      1px 1px var(--fg);
+    transform: translate(0, 1px);
+  }
+  80% {
+    text-shadow:
+      1px -2px var(--magenta),
+      -1px 2px var(--fg);
+    transform: translate(0, -1px);
+  }
+}
+.cv-glitch-hover:hover {
+  animation: cv-glitch-text 0.5s steps(6) infinite;
+}
+.cv-glitch-in {
+  animation: cv-glitch-text 0.4s steps(6) 2;
+}
+
+.cv-page {
+  flex: 1 0 auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.cv-footer {
+  flex: none;
+  max-width: 60rem;
+  margin: var(--space-4) auto var(--space-3);
+  padding: 0 var(--space-3) var(--space-3);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  border-top: 2px solid var(--muted);
+  padding-top: var(--space-3);
+}
+
+.cv-badge {
+  flex: none;
+  width: 120px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  gap: 0.4em;
+  padding: 0 0.5em;
+  background: var(--bg);
+  border: 2px solid var(--fg);
+  box-shadow:
+    inset 0 0 0 1px var(--bg),
+    inset 1px 1px 0 var(--muted),
+    2px 2px 0 var(--magenta);
+  color: var(--fg);
+}
+.cv-badge__eye {
+  color: var(--magenta);
+  font-size: 1.4rem;
+  line-height: 1;
+  text-shadow: 0 0 4px var(--magenta);
+}
+.cv-badge__text {
+  font-family: var(--font-display);
+  font-size: 0.65rem;
+  line-height: 1.2;
+  letter-spacing: 0.02em;
+}
+
+/* Classic 88x31 web badges, picked from a candidate pool per
+   .claude/research/old-internet-aesthetic.md's asset-source notes.
+   image-rendering:pixelated keeps their native low-res look crisp instead of
+   blurring on upscale (they're already shown at native size, but this also
+   protects against any future non-integer scaling). */
+.cv-footer__badges {
+  flex: none;
+  display: flex;
+  gap: var(--space-1);
+}
+.cv-footer__badge {
+  display: block;
+  width: 88px;
+  height: 31px;
+  image-rendering: pixelated;
+}
+.cv-footer__badge--button {
+  padding: 0;
+  border: none;
+  background: none;
+  line-height: 0;
+}
+.cv-footer__badge--button:hover {
+  filter: brightness(1.15) drop-shadow(0 0 4px var(--magenta));
+}
+
+.cv-footer__banner {
+  flex: none;
+  height: 100px;
+  width: auto;
+  image-rendering: pixelated;
+}
+
+.cv-footer__note {
+  flex: 1 1 auto;
+  text-align: right;
+  min-width: 10rem;
+  margin: 0;
+}
+
+.cv-audio-toggle {
+  position: fixed;
+  bottom: var(--space-2);
+  right: var(--space-2);
+  z-index: 9998;
+  font-family: var(--font-utility);
+  font-size: 0.9rem;
+  letter-spacing: 0.08em;
+  background: color-mix(in srgb, var(--bg) 85%, transparent);
+  color: var(--fg);
+  border: 1px solid var(--muted);
+  padding: var(--space-1) var(--space-2);
+}
+.cv-audio-toggle:hover {
+  border-color: var(--magenta);
+}
+
+/* Below this width, a fixed bottom-right button risks sitting on top of the
+   footer's own bottom-right-aligned credit text (both compete for the same
+   corner once the page is short). Drop it into normal flow instead. */
+@media (max-width: 640px) {
+  .cv-audio-toggle {
+    position: static;
+    display: block;
+    width: fit-content;
+    margin: var(--space-2) auto var(--space-3);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
