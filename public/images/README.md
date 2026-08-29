@@ -10,3 +10,5 @@ The rest, picked from a browsable candidate pool gathered for this project (see
 | `intro-web-created-text-banner.gif`  | http://www.animatedgif.net/underconstruction/accreation_e0.gif | Free-clipart-era site, no formal license text |
 | `virus-alert.gif`                    | https://cyber.dabamos.de/88x31/virusalert.gif            | "Feel free to copy," no attribution required |
 | `open-eyes.gif`                      | https://cyber.dabamos.de/88x31/openeyes.gif               | "Feel free to copy," no attribution required |
+| `quantization-16color-palette.png`  | https://commons.wikimedia.org/wiki/File:Dithering_example_undithered_16color_palette.png | Dcoetzee, CC BY-SA 3.0 (attributed in post 3 caption) |
+| `gamma-correction-demo.jpg`         | https://commons.wikimedia.org/wiki/File:GammaCorrection_demo.jpg | X-romix / Rubybrian, CC BY-SA 3.0 (attributed in post 4 caption) |
